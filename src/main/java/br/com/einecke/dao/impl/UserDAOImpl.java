@@ -5,7 +5,7 @@ import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.dao.BasicDAO;
 import org.mongodb.morphia.query.Query;
-
+import org.mongodb.morphia.query.UpdateOperations;
 import br.com.einecke.dao.UserDAO;
 import br.com.einecke.entitiy.User;
 
@@ -20,18 +20,6 @@ public class UserDAOImpl extends BasicDAO<User, ObjectId> implements UserDAO {
 	}
 
 	@Override
-	public User getByFirstNameLastName(String firstName, String lastName) {
-		Query<User> query = createQuery().field("firstName").equal(firstName).field("lastName").equal(lastName);
-		return query.get();
-	}
-
-	@Override
-	public List<User> getByFirstName(String firstName) {
-		Query<User> query = createQuery().field("firstName").equal(firstName);
-		return query.asList();
-	}
-
-	@Override
 	public List<User> getAllUsers() {
 		Query<User> query = createQuery();
 		return query.asList();
@@ -42,15 +30,17 @@ public class UserDAOImpl extends BasicDAO<User, ObjectId> implements UserDAO {
 		Query<User> query = createQuery().field("userId").equal(userId);
 		User user = query.get();
 		return user.getPassword();
+
 	}
 
 	@Override
-	public void addUsersTest() {
-		User user1 = new User("andre", "André", "Einecke", true, "123456");
-		User user2 = new User("daniel.dc", "Daniel", "", true, "54321");
+	public void editUser(User user) {
+		Query<User> query = createQuery().field("userId").equal(user.getUserId());
 
-		this.save(user1);
-		this.save(user2);
+		UpdateOperations<User> upd = createUpdateOperations().disableValidation().set("userId", user.getUserId()).set("firstName", user.getFirstName())
+				.set("lastName", user.getLastName()).set("isAdmin", user.isAdmin()).set("password", user.getPassword());
+
+		this.update(query, upd);
 	}
 
 	@Override
@@ -62,6 +52,13 @@ public class UserDAOImpl extends BasicDAO<User, ObjectId> implements UserDAO {
 	public User getById(String userId) {
 		Query<User> query = createQuery().field("userId").equal(userId);
 		return query.get();
+	}
+
+	@Override
+	public void delete(String userId) {
+		Query<User> query = createQuery().field("userId").equal(userId);
+		User user = query.get();
+		this.delete(user);
 	}
 
 }

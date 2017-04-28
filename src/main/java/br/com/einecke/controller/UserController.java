@@ -2,15 +2,16 @@ package br.com.einecke.controller;
 
 import java.util.List;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import br.com.einecke.dao.impl.UserDAOImpl;
 import br.com.einecke.entitiy.User;
 import br.com.einecke.morphia.MorphiaService;
+import br.com.einecke.util.Login;
+
 /**
  * 
  * WebService rest para cadastro de usuários.
@@ -24,7 +25,8 @@ public class UserController {
 	private final UserDAOImpl dao;
 
 	/**
-	 * Contrutor do rest, inicializa o MorphiaService e o dao, necessários para as transações.
+	 * Contrutor do rest, inicializa o MorphiaService e o dao, necessários para
+	 * as transações.
 	 */
 	public UserController() {
 		morphiaService = new MorphiaService();
@@ -41,17 +43,35 @@ public class UserController {
 	 * @return Resultado do chamado.
 	 */
 	@POST
-	@Produces({ "application/json", "text/plain" })
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces("application/json; charset=UTF-8")
+	@Consumes("application/json; charset=UTF-8")
 	@Path("/login")
-	public String login(@FormParam("login") String login, @FormParam("password") String password) {
-		String userPassword = dao.getUserPassword(login);
-
-		if (password.equals(userPassword)) {
+	public String login(Login login) {
+		String userPassword = dao.getUserPassword(login.getUserId());
+		if (login.getPassword().equals(userPassword)) {
 			return "password successfully";
 		}
 		return "Password incorrect";
+	}
 
+	/**
+	 * Exclui taks pelo código
+	 * 
+	 * @param userId
+	 *            - Código do registro que será excluido.
+	 * @return Resultado do chamado.
+	 */
+	@POST
+	@Produces("application/json; charset=UTF-8")
+	@Consumes("text/plain; charset=UTF-8")
+	@Path("/excluir")
+	public String excluir(String userId) {
+		try {
+			dao.delete(userId);
+			return "usuário excluido com sucesso!";
+		} catch (Exception e) {
+			return "Erro ao excluir usuário. " + e.getMessage();
+		}
 	}
 
 	/**
@@ -59,8 +79,8 @@ public class UserController {
 	 * 
 	 * @param user
 	 *            - dados do usuário.
-	 *            
-	 * @return Resultado da operação.           
+	 * 
+	 * @return Resultado da operação.
 	 */
 	@POST
 	@Consumes("application/json; charset=UTF-8")
@@ -76,17 +96,24 @@ public class UserController {
 	}
 
 	/**
-	 * Cadatra dados para testes.
+	 * Cadatra um usuário.
 	 * 
-	 * @return ...
+	 * @param user
+	 *            - dados do usuário.
+	 * 
+	 * @return Resultado da operação.
 	 */
 	@POST
 	@Consumes("application/json; charset=UTF-8")
 	@Produces("application/json; charset=UTF-8")
-	@Path("/cadastrarTeste")
-	public String dataTest() { 
-		dao.addUsersTest();
-		return "Task cadastrada com sucesso!";
+	@Path("/editar")
+	public String edit(User user) {
+		try {
+			dao.editUser(user);
+			return "Usuario editado com sucesso";
+		} catch (Exception e) { // NOSONAR
+			return "Erro ao editar Usuario " + e.getMessage();
+		}
 	}
 
 	/**
@@ -98,8 +125,21 @@ public class UserController {
 	@Produces("application/json; charset=UTF-8")
 	@Path("/todas")
 	public List<User> list() {
-		return dao.getAllUsers(); // TODO Está funcionando mas esta dando uma excessão, verificar.
-
+		return dao.getAllUsers();
 	}
 
+	/**
+	 * Busca o usuário pelo código
+	 * 
+	 * @param userId
+	 *            - Código do usuário;
+	 * @return Usuário.
+	 */
+	@POST
+	@Produces("application/json; charset=UTF-8")
+	@Consumes("text/plain; charset=UTF-8")
+	@Path("/getUser")
+	public User getUse(String userId) {
+		return dao.getById(userId);
+	}
 }
